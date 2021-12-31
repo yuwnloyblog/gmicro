@@ -10,33 +10,30 @@ type ActorSystem struct {
 	Port        int
 	sender      *MsgSender
 	receiver    *MsgReceiver
-	TellEncoder func(interface{}) []byte
 	RecvDecoder func([]byte, interface{})
 	dispatcher  *ActorDispatcher
 }
 
-func NewActorSystem(name, host string, port int, encoder func(interface{}) []byte, decoder func([]byte, interface{})) *ActorSystem {
+func NewActorSystem(name, host string, port int) *ActorSystem {
 	sender := NewMsgSender()
-	dispatcher := NewActorDispatcher(decoder, encoder, sender)
+	dispatcher := NewActorDispatcher(sender)
 	receiver := NewMsgReceiver(host, port, dispatcher)
 
 	sender.SetMsgReceiver(receiver)
 	system := &ActorSystem{
-		Name:        name,
-		Host:        host,
-		Port:        port,
-		sender:      sender,
-		receiver:    receiver,
-		TellEncoder: encoder,
-		RecvDecoder: decoder,
-		dispatcher:  dispatcher,
+		Name:       name,
+		Host:       host,
+		Port:       port,
+		sender:     sender,
+		receiver:   receiver,
+		dispatcher: dispatcher,
 	}
 	return system
 }
 
 func (system *ActorSystem) ActerOf(host string, port int, method string) ActorRef {
 	uid := utils.GenerateUUIDBytes()
-	ref := NewActorRef(host, port, method, uid, system.TellEncoder, system.sender)
+	ref := NewActorRef(host, port, method, uid, system.sender)
 	return ref
 }
 

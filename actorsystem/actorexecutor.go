@@ -1,9 +1,9 @@
 package actorsystem
 
-import "github.com/yuwnloyblog/gmicro/actorsystem/rpc"
-
-type Processor func(ActorRef, interface{})
-type NewInput func() interface{}
+import (
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
+	"google.golang.org/protobuf/proto"
+)
 
 type Executor struct {
 	CurrentCount int
@@ -14,7 +14,7 @@ type Executor struct {
 /**
 * TODO: Need asynchronous
 **/
-func (exe Executor) Execute(req *rpc.RpcMessageRequest, decoder ReqDecoder, encoder func(interface{}) []byte, msgSender *MsgSender) {
+func (exe Executor) Execute(req *rpc.RpcMessageRequest, msgSender *MsgSender) {
 	var sender ActorRef
 
 	srcHost := req.SrcHost
@@ -30,13 +30,12 @@ func (exe Executor) Execute(req *rpc.RpcMessageRequest, decoder ReqDecoder, enco
 			Port:    int(srcPort),
 			Method:  srcMethod,
 			Session: srcSession,
-			Encoder: encoder,
 			Sender:  msgSender,
 		}
 	}
 
 	bytes := req.Data
 	input := exe.NewInputObj()
-	decoder(bytes, input)
+	proto.Unmarshal(bytes, input)
 	exe.Proc(sender, input)
 }

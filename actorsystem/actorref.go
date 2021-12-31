@@ -1,9 +1,12 @@
 package actorsystem
 
-import "github.com/yuwnloyblog/gmicro/actorsystem/rpc"
+import (
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
+	"google.golang.org/protobuf/proto"
+)
 
 type ActorRef interface {
-	Tell(interface{}, ActorRef)
+	Tell(proto.Message, ActorRef)
 	GetMethod() string
 	GetHost() string
 	GetPort() int
@@ -14,7 +17,6 @@ type DefaultActorRef struct {
 	Port    int
 	Method  string
 	Session []byte
-	Encoder func(interface{}) []byte
 	Sender  *MsgSender
 }
 
@@ -22,7 +24,7 @@ type DeadLetterActorRef struct {
 	DefaultActorRef
 }
 
-func (ref *DeadLetterActorRef) Tell(message interface{}, sender ActorRef) {
+func (ref *DeadLetterActorRef) Tell(message proto.Message, sender ActorRef) {
 	//do nothing
 }
 func (ref *DeadLetterActorRef) GetMethod() string {
@@ -57,21 +59,20 @@ func IsNoSender(req *rpc.RpcMessageRequest) bool {
 	}
 }
 
-func NewActorRef(host string, port int, method string, session []byte, encoder func(interface{}) []byte, sender *MsgSender) ActorRef {
+func NewActorRef(host string, port int, method string, session []byte, sender *MsgSender) ActorRef {
 	ref := &DefaultActorRef{
 		Host:    host,
 		Port:    port,
 		Method:  method,
 		Session: session,
-		Encoder: encoder,
 		Sender:  sender,
 	}
 	return ref
 }
 
-func (ref *DefaultActorRef) Tell(message interface{}, sender ActorRef) {
+func (ref *DefaultActorRef) Tell(message proto.Message, sender ActorRef) {
 	if message != nil {
-		bytes := ref.Encoder(message)
+		bytes, _ := proto.Marshal(message)
 
 		rpcReq := &rpc.RpcMessageRequest{
 			Session:   ref.Session,
