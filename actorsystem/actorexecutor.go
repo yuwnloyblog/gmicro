@@ -1,6 +1,6 @@
 package actorsystem
 
-import "bot/pkg/gmicro/actorsystem/rpc"
+import "github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 
 type Processor func(ActorRef, interface{})
 type NewInput func() interface{}

@@ -1,7 +1,7 @@
 package actorsystem
 
 import (
-	"bot/pkg/gmicro/utils"
+	"github.com/yuwnloyblog/gmicro/utils"
 )
 
 type ActorSystem struct {

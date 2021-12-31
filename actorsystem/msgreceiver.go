@@ -1,7 +1,7 @@
 package actorsystem
 
 import (
-	"bot/pkg/gmicro/actorsystem/rpc"
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 )
 
 type MsgReceiver struct {
