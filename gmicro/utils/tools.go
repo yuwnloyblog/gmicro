@@ -1,0 +1,30 @@
+package utils
+
+import (
+	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
+)
+
+func GenerateUUID() uuid.UUID {
+	uid, _ := uuid.NewUUID()
+	return uid
+}
+
+func GenerateUUIDBytes() []byte {
+	uid, _ := uuid.NewUUID()
+	return []byte(uid.String())
+}
+
+/**
+ *
+ *
+ *
+**/
+func PbMarshal(obj proto.Message) ([]byte, error) {
+	bytes, err := proto.Marshal(obj)
+	return bytes, err
+}
+func PbUnMarshal(bytes []byte, typeScope proto.Message) error {
+	err := proto.Unmarshal(bytes, typeScope)
+	return err
+}
