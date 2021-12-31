@@ -6,9 +6,10 @@ import (
 )
 
 type IRouteMsg interface {
+	proto.Message
 	TargetId() string
 	Method() string
-	Message() interface{}
+	Message() proto.Message
 }
 
 type Cluster struct {
