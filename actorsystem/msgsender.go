@@ -1,9 +1,10 @@
 package actorsystem
 
 import (
-	"bot/pkg/gmicro/actorsystem/rpc"
 	"strconv"
 	"sync"
+
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 )
 
 type MsgSender struct {

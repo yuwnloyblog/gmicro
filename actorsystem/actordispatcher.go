@@ -1,8 +1,9 @@
 package actorsystem
 
 import (
-	"bot/pkg/gmicro/actorsystem/rpc"
 	"sync"
+
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 )
 
 type ActorDispatcher struct {

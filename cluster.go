@@ -1,4 +1,4 @@
-package clusters
+package gmicro
 
 type Cluster struct {
 }

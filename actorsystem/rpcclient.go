@@ -1,10 +1,11 @@
 package actorsystem
 
 import (
-	"bot/pkg/gmicro/actorsystem/rpc"
 	context "context"
 	"fmt"
 	"log"
+
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 
 	grpc "google.golang.org/grpc"
 )
