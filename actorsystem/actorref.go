@@ -7,6 +7,7 @@ import (
 
 type ActorRef interface {
 	Tell(proto.Message, ActorRef)
+	TellAndNoSender(proto.Message)
 	GetMethod() string
 	GetHost() string
 	GetPort() int
@@ -22,6 +23,10 @@ type DefaultActorRef struct {
 
 type DeadLetterActorRef struct {
 	DefaultActorRef
+}
+
+func (ref *DeadLetterActorRef) TellAndNoSender(message proto.Message) {
+	//do nothing
 }
 
 func (ref *DeadLetterActorRef) Tell(message proto.Message, sender ActorRef) {
@@ -68,6 +73,10 @@ func NewActorRef(host string, port int, method string, session []byte, sender *M
 		Sender:  sender,
 	}
 	return ref
+}
+
+func (ref *DefaultActorRef) TellAndNoSender(message proto.Message) {
+	ref.Tell(message, NoSender)
 }
 
 func (ref *DefaultActorRef) Tell(message proto.Message, sender ActorRef) {

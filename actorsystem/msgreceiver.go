@@ -1,6 +1,8 @@
 package actorsystem
 
 import (
+	"fmt"
+
 	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 )
 
@@ -18,9 +20,15 @@ func NewMsgReceiver(host string, port int, dispatcher *ActorDispatcher) *MsgRece
 		recQueue:   make(chan *rpc.RpcMessageRequest, 10000),
 		dispatcher: dispatcher,
 	}
-	rpcServer := NewRpcServer(host, port, rec)
+	//start receiver queue
 	go rec.start()
-	go rpcServer.Start()
+	if host == NoRpcHost && port == NoRpcPort {
+		//do nothing
+	} else {
+		//start rpc server
+		rpcServer := NewRpcServer(host, port, rec)
+		go rpcServer.Start()
+	}
 	return rec
 }
 
@@ -31,6 +39,7 @@ func (rec *MsgReceiver) Receive(req *rpc.RpcMessageRequest) {
 }
 
 func (rec *MsgReceiver) isMatch(host string, port int) bool {
+	fmt.Println("rec.host:", rec.host, ",rec.port:", rec.port, ",host:", host, ",port:", port)
 	if rec.host == host && rec.port == port {
 		return true
 	}

@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
 )
@@ -27,4 +29,12 @@ func PbMarshal(obj proto.Message) ([]byte, error) {
 func PbUnMarshal(bytes []byte, typeScope proto.Message) error {
 	err := proto.Unmarshal(bytes, typeScope)
 	return err
+}
+
+func JsonMarshal(obj interface{}) ([]byte, error) {
+	return json.Marshal(obj)
+}
+
+func JsonUnMarshal(bytes []byte, obj interface{}) error {
+	return json.Unmarshal(bytes, obj)
 }

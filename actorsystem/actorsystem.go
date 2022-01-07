@@ -4,14 +4,23 @@ import (
 	"github.com/yuwnloyblog/gmicro/utils"
 )
 
+const (
+	NoRpcHost string = "-"
+	NoRpcPort int    = 0
+)
+
 type ActorSystem struct {
 	Name        string
 	Host        string
-	Port        int
+	Prot        int
 	sender      *MsgSender
 	receiver    *MsgReceiver
 	RecvDecoder func([]byte, interface{})
 	dispatcher  *ActorDispatcher
+}
+
+func NewActorSystemNoRpc(name string) *ActorSystem {
+	return NewActorSystem(name, NoRpcHost, NoRpcPort)
 }
 
 func NewActorSystem(name, host string, port int) *ActorSystem {
@@ -23,12 +32,16 @@ func NewActorSystem(name, host string, port int) *ActorSystem {
 	system := &ActorSystem{
 		Name:       name,
 		Host:       host,
-		Port:       port,
+		Prot:       port,
 		sender:     sender,
 		receiver:   receiver,
 		dispatcher: dispatcher,
 	}
 	return system
+}
+
+func (system *ActorSystem) LocalActorOf(method string) ActorRef {
+	return system.ActerOf(system.Host, system.Prot, method)
 }
 
 func (system *ActorSystem) ActerOf(host string, port int, method string) ActorRef {
