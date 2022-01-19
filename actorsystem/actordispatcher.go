@@ -72,8 +72,8 @@ func (dispatcher *ActorDispatcher) Destroy() {
 		dispatcher.timer.Stop()
 	}
 }
-func (dispatcher *ActorDispatcher) RegisterActor(method string, actor UntypedActor, concurrentCount int) {
-	executor := NewActorExecutor(concurrentCount, actor)
+func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun func() UntypedActor, concurrentCount int) {
+	executor := NewActorExecutor(concurrentCount, actorCreateFun)
 	dispatcher.dispatchMap.Store(method, executor)
 }
 

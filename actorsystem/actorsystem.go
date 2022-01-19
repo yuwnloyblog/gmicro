@@ -56,10 +56,6 @@ func (system *ActorSystem) CallbackActerOf(ttl int64, newInput NewInput, process
 	return ref
 }
 
-// func (system *ActorSystem) RegisterActorProcessor(method string, newInput NewInput, processor Processor, currentCount int) {
-
-// 	system.dispatcher.RegisterActorProcessor(method, NewExecutor(currentCount, newInput, processor))
-// }
-func (system *ActorSystem) RegisterActor(method string, actor UntypedActor, concurrentCount int) {
-	system.dispatcher.RegisterActor(method, actor, concurrentCount)
+func (system *ActorSystem) RegisterActor(method string, actorCreateFun func() UntypedActor, concurrentCount int) {
+	system.dispatcher.RegisterActor(method, actorCreateFun, concurrentCount)
 }

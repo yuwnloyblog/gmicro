@@ -1,7 +1,6 @@
 package actorsystem
 
 import (
-	"reflect"
 	"sync"
 
 	"github.com/Jeffail/tunny"
@@ -13,33 +12,30 @@ type IExecutor interface {
 }
 
 type ActorExecutor struct {
-	wraperChan  chan wraper
-	executePool *tunny.Pool
-	actorPool   sync.Pool
-	actor       UntypedActor
+	wraperChan     chan wraper
+	executePool    *tunny.Pool
+	actorPool      sync.Pool
+	actorCreateFun func() UntypedActor
 }
 
-func NewActorExecutor(concurrentCount int, actor UntypedActor) *ActorExecutor {
+func NewActorExecutor(concurrentCount int, actorCreateFun func() UntypedActor) *ActorExecutor {
 	pool := sync.Pool{
 		New: func() interface{} {
-			refObj := reflect.TypeOf(actor).Elem()
-			objValue := reflect.New(refObj)
-			obj := objValue.Interface()
-			return obj
+			return actorCreateFun()
 		},
 	}
 	executor := &ActorExecutor{
-		wraperChan:  make(chan wraper, buffersize),
-		executePool: tunny.NewCallback(concurrentCount),
-		actorPool:   pool,
-		actor:       actor,
+		wraperChan:     make(chan wraper, buffersize),
+		executePool:    tunny.NewCallback(concurrentCount),
+		actorPool:      pool,
+		actorCreateFun: actorCreateFun,
 	}
 	go actorExecute(executor)
 	return executor
 }
 
 func (executor *ActorExecutor) Execute(req *rpc.RpcMessageRequest, msgSender *MsgSender) {
-	executor.wraperChan <- commonExecute(req, msgSender, executor.actor)
+	executor.wraperChan <- commonExecute(req, msgSender, executor.actorCreateFun())
 }
 
 func actorExecute(executor *ActorExecutor) {

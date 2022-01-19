@@ -43,8 +43,8 @@ func NewCluster(clustername, nodename, host string, port int, zkAddress []string
 	return cluster
 }
 
-func (cluster *Cluster) RegisterActor(method string, actor actorsystem.UntypedActor, concurrentCount int) {
-	cluster.actorSystem.RegisterActor(method, actor, concurrentCount)
+func (cluster *Cluster) RegisterActor(method string, actorCreateFun func() actorsystem.UntypedActor, concurrentCount int) {
+	cluster.actorSystem.RegisterActor(method, actorCreateFun, concurrentCount)
 	cluster.currentNode.AddMethod(method)
 }
 

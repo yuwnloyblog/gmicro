@@ -59,7 +59,7 @@ func (act *MyActor) CreateInputObj() proto.Message {
 func main() {
 	actorSystem := actorsystem.NewActorSystemNoRpc("MyActorSystem")
 
-	actorSystem.RegisterActor("m1", &MyActor{}, 1)
+	actorSystem.RegisterActor("m1", func() actorsystem.UntypedActor { return &MyActor{} }, 3)
 
 	for i := 0; i < 10; i++ {
 		actor := actorSystem.LocalActorOf("m1")
