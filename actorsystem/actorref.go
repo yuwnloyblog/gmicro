@@ -11,14 +11,18 @@ type ActorRef interface {
 	GetMethod() string
 	GetHost() string
 	GetPort() int
+	isCallback() bool
+	startCallbackActor(session []byte)
 }
 
 type DefaultActorRef struct {
-	Host    string
-	Port    int
-	Method  string
-	Session []byte
-	Sender  *MsgSender
+	Host        string
+	Port        int
+	Method      string
+	Session     []byte
+	Sender      *MsgSender
+	is_Callback bool
+	ttl         int64
 }
 
 type DeadLetterActorRef struct {
@@ -75,6 +79,18 @@ func NewActorRef(host string, port int, method string, session []byte, sender *M
 	return ref
 }
 
+func NewCallbackActorRef(ttl int64, host string, port int, session []byte, sender *MsgSender) ActorRef {
+	ref := &DefaultActorRef{
+		Host:        host,
+		Port:        port,
+		Session:     session,
+		Sender:      sender,
+		is_Callback: true,
+		ttl:         ttl,
+	}
+	return ref
+}
+
 func (ref *DefaultActorRef) TellAndNoSender(message proto.Message) {
 	ref.Tell(message, NoSender)
 }
@@ -95,8 +111,18 @@ func (ref *DefaultActorRef) Tell(message proto.Message, sender ActorRef) {
 
 			Data: bytes,
 		}
+		if ref.is_Callback {
+			ref.startCallbackActor(ref.Session)
+		}
+		if sender.isCallback() {
+			sender.startCallbackActor(ref.Session)
+		}
 		ref.Sender.Send(rpcReq)
 	}
+}
+
+func (ref *DefaultActorRef) startCallbackActor(session []byte) {
+
 }
 func (ref *DefaultActorRef) GetMethod() string {
 	return ref.Method
@@ -106,4 +132,7 @@ func (ref *DefaultActorRef) GetHost() string {
 }
 func (ref *DefaultActorRef) GetPort() int {
 	return ref.Port
+}
+func (ref *DefaultActorRef) isCallback() bool {
+	return ref.is_Callback
 }

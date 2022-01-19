@@ -17,6 +17,11 @@ func GenerateUUIDBytes() []byte {
 	return []byte(uid.String())
 }
 
+func UUIDStringByBytes(bytes []byte) (string, error) {
+	uuid, err := uuid.FromBytes(bytes)
+	return uuid.String(), err
+}
+
 /**
  *
  *

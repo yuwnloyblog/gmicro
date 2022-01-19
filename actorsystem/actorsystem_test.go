@@ -11,17 +11,17 @@ import (
 )
 
 func TestNewActorSystemNoRpc(t *testing.T) {
-	actorSystem := NewActorSystemNoRpc("MyActorSystem")
-	actorSystem.RegisterActorProcessor("m1", func() proto.Message {
-		return &utils.Student{}
-	}, ActorSystemDemoProcessor, 10)
+	// actorSystem := NewActorSystemNoRpc("MyActorSystem")
+	// actorSystem.RegisterActorProcessor("m1", func() proto.Message {
+	// 	return &utils.Student{}
+	// }, ActorSystemDemoProcessor, 10)
 
-	stu := &utils.Student{
-		Name: "name2",
-		Age:  1,
-	}
-	actor := actorSystem.LocalActorOf("m1")
-	actor.Tell(stu, NoSender)
+	// stu := &utils.Student{
+	// 	Name: "name2",
+	// 	Age:  1,
+	// }
+	// actor := actorSystem.LocalActorOf("m1")
+	// actor.Tell(stu, NoSender)
 
 	time.Sleep(5 * time.Second)
 }

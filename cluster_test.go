@@ -12,10 +12,13 @@ import (
 )
 
 func TestNewCluster(t *testing.T) {
-	cluster := NewCluster("cluster1", "127.0.0.1", 8888, []string{"127.0.0.1:2181"})
-	cluster.RegisterActorProcessor("m1", func() proto.Message {
-		return &utils.Student{}
-	}, MyProcessor, 10)
+	cluster := NewCluster("cluster1", "node1", "127.0.0.1", 8888, []string{"127.0.0.1:2181"})
+	//cluster := NewSingleCluster("cluster1")
+	// cluster.RegisterActorProcessor("m1", func() proto.Message {
+	// 	return &utils.Student{}
+	// }, MyProcessor, 10)
+
+	cluster.StartUp()
 
 	stu := &utils.Student{
 		Name: "name1",

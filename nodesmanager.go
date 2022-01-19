@@ -14,10 +14,31 @@ import (
 )
 
 type Node struct {
-	Name    string   `json:"name"`
-	Ip      string   `json:"ip"`
-	Port    int      `json:"port"`
-	Methods []string `json:"methods"`
+	Name      string          `json:"name"`
+	Ip        string          `json:"ip"`
+	Port      int             `json:"port"`
+	Methods   []string        `json:"methods"`
+	methodMap map[string]bool `json:"-"`
+}
+
+func NewNode(name, ip string, port int) *Node {
+	node := &Node{
+		Name:      name,
+		Ip:        ip,
+		Port:      port,
+		Methods:   []string{},
+		methodMap: make(map[string]bool),
+	}
+	return node
+}
+
+func (node *Node) AddMethod(method string) {
+	node.methodMap[method] = true
+	methodArr := make([]string, 0, len(node.methodMap))
+	for method := range node.methodMap {
+		methodArr = append(methodArr, method)
+	}
+	node.Methods = methodArr
 }
 
 type NodesManager struct {
@@ -26,17 +47,6 @@ type NodesManager struct {
 	nodeMap           map[string]*Node
 	method2RingMapStr map[string]string
 	ringMap           map[string]*commonutils.ConsistentHash
-}
-
-func NewSingleNodeManager(name string, ip string, port int) *NodesManager {
-	manager := &NodesManager{}
-	node := &Node{
-		Name: name,
-		Ip:   ip,
-		Port: port,
-	}
-	manager.initHashRingByNodes([]*Node{node})
-	return manager
 }
 
 func NewNodesManager(basePath string, zkAddress []string) (*NodesManager, error) {
@@ -99,7 +109,7 @@ func (manager *NodesManager) initHashRingByNodes(nodes []*Node) {
 
 	for method, nodeNameSet := range tmpMethod2Nodes {
 		nodeNameSlice := make([]string, 0, len(nodeNameSet))
-		for name, _ := range nodeNameSet {
+		for name := range nodeNameSet {
 			nodeNameSlice = append(nodeNameSlice, name)
 		}
 		sort.Strings(nodeNameSlice)
@@ -171,7 +181,7 @@ func (manager *NodesManager) GetTargetNode(method, targetId string) *Node {
 * The path of node data:   /gmicro/clusters/{clusterName}/nodes/{node.Name}
 *
 **/
-func (manager *NodesManager) RegisterSelf(node Node, path string) {
+func (manager *NodesManager) RegisterSelf2ZK(node Node) {
 	nodePath := manager.basePath + "/nodes/" + node.Name
 	data, _ := utils.JsonMarshal(node)
 	isExist, state, _ := manager.zkConn.Exists(nodePath)

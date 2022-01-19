@@ -1,8 +1,6 @@
 package actorsystem
 
 import (
-	"fmt"
-
 	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 )
 
@@ -39,7 +37,6 @@ func (rec *MsgReceiver) Receive(req *rpc.RpcMessageRequest) {
 }
 
 func (rec *MsgReceiver) isMatch(host string, port int) bool {
-	fmt.Println("rec.host:", rec.host, ",rec.port:", rec.port, ",host:", host, ",port:", port)
 	if rec.host == host && rec.port == port {
 		return true
 	}

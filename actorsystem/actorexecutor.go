@@ -1,41 +1,56 @@
 package actorsystem
 
 import (
+	"reflect"
+	"sync"
+
+	"github.com/Jeffail/tunny"
 	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
-type Executor struct {
-	CurrentCount int
-	NewInputObj  NewInput
-	Proc         Processor
+type IExecutor interface {
+	Execute(req *rpc.RpcMessageRequest, msgSender *MsgSender)
 }
 
-/**
-* TODO: Need asynchronous
-**/
-func (exe Executor) Execute(req *rpc.RpcMessageRequest, msgSender *MsgSender) {
-	var sender ActorRef
+type ActorExecutor struct {
+	wraperChan  chan wraper
+	executePool *tunny.Pool
+	actorPool   sync.Pool
+	actor       UntypedActor
+}
 
-	srcHost := req.SrcHost
-	srcPort := req.SrcPort
-	srcMethod := req.SrcMethod
-	srcSession := req.Session
-
-	if IsNoSender(req) {
-		sender = NoSender
-	} else {
-		sender = &DefaultActorRef{
-			Host:    srcHost,
-			Port:    int(srcPort),
-			Method:  srcMethod,
-			Session: srcSession,
-			Sender:  msgSender,
-		}
+func NewActorExecutor(concurrentCount int, actor UntypedActor) *ActorExecutor {
+	pool := sync.Pool{
+		New: func() interface{} {
+			refObj := reflect.TypeOf(actor).Elem()
+			objValue := reflect.New(refObj)
+			obj := objValue.Interface()
+			return obj
+		},
 	}
+	executor := &ActorExecutor{
+		wraperChan:  make(chan wraper, buffersize),
+		executePool: tunny.NewCallback(concurrentCount),
+		actorPool:   pool,
+		actor:       actor,
+	}
+	go actorExecute(executor)
+	return executor
+}
 
-	bytes := req.Data
-	input := exe.NewInputObj()
-	proto.Unmarshal(bytes, input)
-	exe.Proc(sender, input)
+func (executor *ActorExecutor) Execute(req *rpc.RpcMessageRequest, msgSender *MsgSender) {
+	executor.wraperChan <- commonExecute(req, msgSender, executor.actor)
+}
+
+func actorExecute(executor *ActorExecutor) {
+	for {
+		wraper := <-executor.wraperChan
+		go executor.executePool.Process(func() {
+			actorObj := executor.actorPool.Get()
+			actor := actorObj.(UntypedActor)
+			actor.SetSender(wraper.sender)
+			actor.OnReceive(wraper.msg)
+			executor.actorPool.Put(actorObj)
+		})
+	}
 }
