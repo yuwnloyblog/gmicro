@@ -1,28 +1,39 @@
 package actorsystem
 
-import "github.com/yuwnloyblog/gmicro/actorsystem/rpc"
+import (
+	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
+	"google.golang.org/protobuf/proto"
+)
 
 type ActorRef interface {
-	Tell(interface{}, ActorRef)
+	Tell(proto.Message, ActorRef)
+	TellAndNoSender(proto.Message)
 	GetMethod() string
 	GetHost() string
 	GetPort() int
+	isCallback() bool
+	startCallbackActor(session []byte)
 }
 
 type DefaultActorRef struct {
-	Host    string
-	Port    int
-	Method  string
-	Session []byte
-	Encoder func(interface{}) []byte
-	Sender  *MsgSender
+	Host        string
+	Port        int
+	Method      string
+	Session     []byte
+	Sender      *MsgSender
+	is_Callback bool
+	ttl         int64
 }
 
 type DeadLetterActorRef struct {
 	DefaultActorRef
 }
 
-func (ref *DeadLetterActorRef) Tell(message interface{}, sender ActorRef) {
+func (ref *DeadLetterActorRef) TellAndNoSender(message proto.Message) {
+	//do nothing
+}
+
+func (ref *DeadLetterActorRef) Tell(message proto.Message, sender ActorRef) {
 	//do nothing
 }
 func (ref *DeadLetterActorRef) GetMethod() string {
@@ -57,21 +68,36 @@ func IsNoSender(req *rpc.RpcMessageRequest) bool {
 	}
 }
 
-func NewActorRef(host string, port int, method string, session []byte, encoder func(interface{}) []byte, sender *MsgSender) ActorRef {
+func NewActorRef(host string, port int, method string, session []byte, sender *MsgSender) ActorRef {
 	ref := &DefaultActorRef{
 		Host:    host,
 		Port:    port,
 		Method:  method,
 		Session: session,
-		Encoder: encoder,
 		Sender:  sender,
 	}
 	return ref
 }
 
-func (ref *DefaultActorRef) Tell(message interface{}, sender ActorRef) {
+func NewCallbackActorRef(ttl int64, host string, port int, session []byte, sender *MsgSender) ActorRef {
+	ref := &DefaultActorRef{
+		Host:        host,
+		Port:        port,
+		Session:     session,
+		Sender:      sender,
+		is_Callback: true,
+		ttl:         ttl,
+	}
+	return ref
+}
+
+func (ref *DefaultActorRef) TellAndNoSender(message proto.Message) {
+	ref.Tell(message, NoSender)
+}
+
+func (ref *DefaultActorRef) Tell(message proto.Message, sender ActorRef) {
 	if message != nil {
-		bytes := ref.Encoder(message)
+		bytes, _ := proto.Marshal(message)
 
 		rpcReq := &rpc.RpcMessageRequest{
 			Session:   ref.Session,
@@ -85,8 +111,18 @@ func (ref *DefaultActorRef) Tell(message interface{}, sender ActorRef) {
 
 			Data: bytes,
 		}
+		if ref.is_Callback {
+			ref.startCallbackActor(ref.Session)
+		}
+		if sender.isCallback() {
+			sender.startCallbackActor(ref.Session)
+		}
 		ref.Sender.Send(rpcReq)
 	}
+}
+
+func (ref *DefaultActorRef) startCallbackActor(session []byte) {
+
 }
 func (ref *DefaultActorRef) GetMethod() string {
 	return ref.Method
@@ -96,4 +132,7 @@ func (ref *DefaultActorRef) GetHost() string {
 }
 func (ref *DefaultActorRef) GetPort() int {
 	return ref.Port
+}
+func (ref *DefaultActorRef) isCallback() bool {
+	return ref.is_Callback
 }

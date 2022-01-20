@@ -18,9 +18,15 @@ func NewMsgReceiver(host string, port int, dispatcher *ActorDispatcher) *MsgRece
 		recQueue:   make(chan *rpc.RpcMessageRequest, 10000),
 		dispatcher: dispatcher,
 	}
-	rpcServer := NewRpcServer(host, port, rec)
+	//start receiver queue
 	go rec.start()
-	go rpcServer.Start()
+	if host == NoRpcHost && port == NoRpcPort {
+		//do nothing
+	} else {
+		//start rpc server
+		rpcServer := NewRpcServer(host, port, rec)
+		go rpcServer.Start()
+	}
 	return rec
 }
 
