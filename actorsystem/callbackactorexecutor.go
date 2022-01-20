@@ -10,10 +10,10 @@ type CallbackActorExecutor struct {
 	Task         *timewheel.Task
 	wraperChan   chan wraper
 	callbackPool *tunny.Pool
-	actor        UntypedActor
+	actor        IUntypedActor
 }
 
-func NewCallbackActorExecutor(callbackPool *tunny.Pool, wraperChan chan wraper, actor UntypedActor) *CallbackActorExecutor {
+func NewCallbackActorExecutor(callbackPool *tunny.Pool, wraperChan chan wraper, actor IUntypedActor) *CallbackActorExecutor {
 	executor := &CallbackActorExecutor{
 		wraperChan:   wraperChan,
 		callbackPool: callbackPool,

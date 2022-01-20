@@ -72,12 +72,12 @@ func (dispatcher *ActorDispatcher) Destroy() {
 		dispatcher.timer.Stop()
 	}
 }
-func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun func() UntypedActor, concurrentCount int) {
+func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun func() IUntypedActor, concurrentCount int) {
 	executor := NewActorExecutor(concurrentCount, actorCreateFun)
 	dispatcher.dispatchMap.Store(method, executor)
 }
 
-func (dispatcher *ActorDispatcher) AddCallbackActor(session []byte, actor UntypedActor, ttl int) {
+func (dispatcher *ActorDispatcher) AddCallbackActor(session []byte, actor IUntypedActor, ttl int) {
 	executor := NewCallbackActorExecutor(dispatcher.callbackPool, dispatcher.callbackWraperChan, actor)
 	key, err := utils.UUIDStringByBytes(session)
 	if err == nil {
@@ -93,7 +93,7 @@ func (dispatcher *ActorDispatcher) AddCallbackActor(session []byte, actor Untype
 	}
 }
 
-func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor UntypedActor) wraper {
+func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor IUntypedActor) wraper {
 	var sender ActorRef
 
 	srcHost := req.SrcHost
@@ -127,7 +127,7 @@ func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor Untyp
 type wraper struct {
 	sender ActorRef
 	msg    proto.Message
-	actor  UntypedActor
+	actor  IUntypedActor
 }
 
 func callbackActorExecute(pool *tunny.Pool, callbackWraperChan chan wraper) {
