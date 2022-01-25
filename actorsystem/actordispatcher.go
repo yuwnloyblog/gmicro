@@ -44,18 +44,16 @@ func (dispatcher *ActorDispatcher) Dispatch(req *rpc.RpcMessageRequest) {
 	var executor IExecutor
 
 	if targetMethod == "" { //callback actor
-		key, err := utils.UUIDStringByBytes(req.Session)
-		if err == nil {
-			obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
-			if ok {
-				callbackExecutor := obj.(*CallbackActorExecutor)
-				//remove from timer task
-				task := callbackExecutor.Task
-				if task != nil {
-					dispatcher.timer.Remove(task)
-				}
-				executor = callbackExecutor
+		key := utils.Bytes2ShortString(req.Session)
+		obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
+		if ok {
+			callbackExecutor := obj.(*CallbackActorExecutor)
+			//remove from timer task
+			task := callbackExecutor.Task
+			if task != nil {
+				dispatcher.timer.Remove(task)
 			}
+			executor = callbackExecutor
 		}
 	} else {
 		obj, ok := dispatcher.dispatchMap.Load(targetMethod)
@@ -77,20 +75,21 @@ func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun f
 	dispatcher.dispatchMap.Store(method, executor)
 }
 
-func (dispatcher *ActorDispatcher) AddCallbackActor(session []byte, actor IUntypedActor, ttl int) {
+func (dispatcher *ActorDispatcher) AddCallbackActor(session [16]byte, actor IUntypedActor, ttl int) {
 	executor := NewCallbackActorExecutor(dispatcher.callbackPool, dispatcher.callbackWraperChan, actor)
-	key, err := utils.UUIDStringByBytes(session)
-	if err == nil {
-		dispatcher.callbackMap.Store(key, executor)
-		task := dispatcher.timer.Add(time.Duration(ttl)*time.Second, func() {
-			obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
-			if ok {
-				executor := obj.(*CallbackActorExecutor)
-				executor.doTimeout()
-			}
-		})
-		executor.Task = task
-	}
+	key := utils.UUIDBytes2ShortString(session)
+	//utils.UUIDStringByBytes(session)
+
+	dispatcher.callbackMap.Store(key, executor)
+	task := dispatcher.timer.Add(time.Duration(ttl)*time.Second, func() {
+		obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
+		if ok {
+			executor := obj.(*CallbackActorExecutor)
+			executor.doTimeout()
+		}
+	})
+	executor.Task = task
+
 }
 
 func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor IUntypedActor) wraper {
