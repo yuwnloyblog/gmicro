@@ -4,38 +4,33 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type IUntypedActor interface {
+type IUntypedActor interface{}
+
+type IReceiveHandler interface {
 	OnReceive(msg proto.Message)
+}
+type ISenderHandler interface {
 	SetSender(sender ActorRef)
-	GetSender() ActorRef
+}
+type ISelfHandler interface {
 	SetSelf(self ActorRef)
-	GetSelf() ActorRef
+}
+type ITimeoutHandler interface {
 	OnTimeout()
+}
+type ICreateInputHandler interface {
 	CreateInputObj() proto.Message
 }
 
 type UntypedActor struct {
-	sender ActorRef
-	self   ActorRef
+	Sender ActorRef
+	Self   ActorRef
 }
 
-func (act *UntypedActor) OnReceive(input proto.Message) {
-}
 func (act *UntypedActor) SetSender(sender ActorRef) {
-	act.sender = sender
+	act.Sender = sender
 }
-func (act *UntypedActor) GetSender() ActorRef {
-	return act.sender
-}
-func (act *UntypedActor) SetSelf(self ActorRef) {
-	act.self = self
-}
-func (act *UntypedActor) GetSelf() ActorRef {
-	return act.self
-}
-func (act *UntypedActor) OnTimeout() {
 
-}
-func (act *UntypedActor) CreateInputObj() proto.Message {
-	return nil
+func (act *UntypedActor) SetSelf(self ActorRef) {
+	act.Self = self
 }

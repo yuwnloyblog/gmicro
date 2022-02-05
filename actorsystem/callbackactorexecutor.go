@@ -28,6 +28,9 @@ func (executor *CallbackActorExecutor) Execute(req *rpc.RpcMessageRequest, msgSe
 
 func (executor *CallbackActorExecutor) doTimeout() {
 	if executor.actor != nil {
-		executor.actor.OnTimeout()
+		timeoutHandler, ok := executor.actor.(ITimeoutHandler)
+		if ok {
+			timeoutHandler.OnTimeout()
+		}
 	}
 }

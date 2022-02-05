@@ -114,8 +114,12 @@ func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor IUnty
 
 	bytes := req.Data
 
-	input := actor.CreateInputObj()
-	proto.Unmarshal(bytes, input)
+	createInputHandler, ok := actor.(ICreateInputHandler)
+	var input proto.Message
+	if ok {
+		input = createInputHandler.CreateInputObj()
+		proto.Unmarshal(bytes, input)
+	}
 	return wraper{
 		sender: sender,
 		msg:    input,
@@ -134,8 +138,15 @@ func callbackActorExecute(pool *tunny.Pool, callbackWraperChan chan wraper) {
 		wrapper := <-callbackWraperChan
 		pool.Process(func() {
 			actor := wrapper.actor
-			actor.SetSender(wrapper.sender)
-			actor.OnReceive(wrapper.msg)
+
+			senderHandler, ok := actor.(ISenderHandler)
+			if ok {
+				senderHandler.SetSender(wrapper.sender)
+			}
+			receiveHandler, ok := actor.(IReceiveHandler)
+			if ok {
+				receiveHandler.OnReceive(wrapper.msg)
+			}
 		})
 	}
 }

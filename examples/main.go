@@ -42,6 +42,10 @@ func (act *MyActor) CreateInputObj() proto.Message {
 }
 
 func main() {
+	main_a()
+}
+
+func main_a() {
 	actorSystem := actorsystem.NewActorSystemNoRpc("MyActorSystem")
 
 	actorSystem.RegisterActor("m1", func() actorsystem.IUntypedActor { return &MyActor{} }, 3)
