@@ -10,10 +10,10 @@ type CallbackActorExecutor struct {
 	Task         *timewheel.Task
 	wraperChan   chan wraper
 	callbackPool *tunny.Pool
-	actor        UntypedActor
+	actor        IUntypedActor
 }
 
-func NewCallbackActorExecutor(callbackPool *tunny.Pool, wraperChan chan wraper, actor UntypedActor) *CallbackActorExecutor {
+func NewCallbackActorExecutor(callbackPool *tunny.Pool, wraperChan chan wraper, actor IUntypedActor) *CallbackActorExecutor {
 	executor := &CallbackActorExecutor{
 		wraperChan:   wraperChan,
 		callbackPool: callbackPool,
@@ -28,6 +28,9 @@ func (executor *CallbackActorExecutor) Execute(req *rpc.RpcMessageRequest, msgSe
 
 func (executor *CallbackActorExecutor) doTimeout() {
 	if executor.actor != nil {
-		executor.actor.OnTimeout()
+		timeoutHandler, ok := executor.actor.(ITimeoutHandler)
+		if ok {
+			timeoutHandler.OnTimeout()
+		}
 	}
 }

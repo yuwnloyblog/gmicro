@@ -15,10 +15,10 @@ type ActorExecutor struct {
 	wraperChan     chan wraper
 	executePool    *tunny.Pool
 	actorPool      sync.Pool
-	actorCreateFun func() UntypedActor
+	actorCreateFun func() IUntypedActor
 }
 
-func NewActorExecutor(concurrentCount int, actorCreateFun func() UntypedActor) *ActorExecutor {
+func NewActorExecutor(concurrentCount int, actorCreateFun func() IUntypedActor) *ActorExecutor {
 	pool := sync.Pool{
 		New: func() interface{} {
 			return actorCreateFun()
@@ -43,9 +43,17 @@ func actorExecute(executor *ActorExecutor) {
 		wraper := <-executor.wraperChan
 		go executor.executePool.Process(func() {
 			actorObj := executor.actorPool.Get()
-			actor := actorObj.(UntypedActor)
-			actor.SetSender(wraper.sender)
-			actor.OnReceive(wraper.msg)
+			actor := actorObj.(IUntypedActor)
+
+			senderHandler, ok := actor.(ISenderHandler)
+			if ok {
+				senderHandler.SetSender(wraper.sender)
+			}
+
+			receiveHandler, ok := actor.(IReceiveHandler)
+			if ok {
+				receiveHandler.OnReceive(wraper.msg)
+			}
 			executor.actorPool.Put(actorObj)
 		})
 	}

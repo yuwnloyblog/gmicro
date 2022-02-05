@@ -44,18 +44,16 @@ func (dispatcher *ActorDispatcher) Dispatch(req *rpc.RpcMessageRequest) {
 	var executor IExecutor
 
 	if targetMethod == "" { //callback actor
-		key, err := utils.UUIDStringByBytes(req.Session)
-		if err == nil {
-			obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
-			if ok {
-				callbackExecutor := obj.(*CallbackActorExecutor)
-				//remove from timer task
-				task := callbackExecutor.Task
-				if task != nil {
-					dispatcher.timer.Remove(task)
-				}
-				executor = callbackExecutor
+		key := utils.Bytes2ShortString(req.Session)
+		obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
+		if ok {
+			callbackExecutor := obj.(*CallbackActorExecutor)
+			//remove from timer task
+			task := callbackExecutor.Task
+			if task != nil {
+				dispatcher.timer.Remove(task)
 			}
+			executor = callbackExecutor
 		}
 	} else {
 		obj, ok := dispatcher.dispatchMap.Load(targetMethod)
@@ -72,28 +70,29 @@ func (dispatcher *ActorDispatcher) Destroy() {
 		dispatcher.timer.Stop()
 	}
 }
-func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun func() UntypedActor, concurrentCount int) {
+func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun func() IUntypedActor, concurrentCount int) {
 	executor := NewActorExecutor(concurrentCount, actorCreateFun)
 	dispatcher.dispatchMap.Store(method, executor)
 }
 
-func (dispatcher *ActorDispatcher) AddCallbackActor(session []byte, actor UntypedActor, ttl int) {
+func (dispatcher *ActorDispatcher) AddCallbackActor(session [16]byte, actor IUntypedActor, ttl int) {
 	executor := NewCallbackActorExecutor(dispatcher.callbackPool, dispatcher.callbackWraperChan, actor)
-	key, err := utils.UUIDStringByBytes(session)
-	if err == nil {
-		dispatcher.callbackMap.Store(key, executor)
-		task := dispatcher.timer.Add(time.Duration(ttl)*time.Second, func() {
-			obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
-			if ok {
-				executor := obj.(*CallbackActorExecutor)
-				executor.doTimeout()
-			}
-		})
-		executor.Task = task
-	}
+	key := utils.UUIDBytes2ShortString(session)
+	//utils.UUIDStringByBytes(session)
+
+	dispatcher.callbackMap.Store(key, executor)
+	task := dispatcher.timer.Add(time.Duration(ttl)*time.Second, func() {
+		obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
+		if ok {
+			executor := obj.(*CallbackActorExecutor)
+			executor.doTimeout()
+		}
+	})
+	executor.Task = task
+
 }
 
-func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor UntypedActor) wraper {
+func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor IUntypedActor) wraper {
 	var sender ActorRef
 
 	srcHost := req.SrcHost
@@ -115,8 +114,12 @@ func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor Untyp
 
 	bytes := req.Data
 
-	input := actor.CreateInputObj()
-	proto.Unmarshal(bytes, input)
+	createInputHandler, ok := actor.(ICreateInputHandler)
+	var input proto.Message
+	if ok {
+		input = createInputHandler.CreateInputObj()
+		proto.Unmarshal(bytes, input)
+	}
 	return wraper{
 		sender: sender,
 		msg:    input,
@@ -127,7 +130,7 @@ func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor Untyp
 type wraper struct {
 	sender ActorRef
 	msg    proto.Message
-	actor  UntypedActor
+	actor  IUntypedActor
 }
 
 func callbackActorExecute(pool *tunny.Pool, callbackWraperChan chan wraper) {
@@ -135,8 +138,15 @@ func callbackActorExecute(pool *tunny.Pool, callbackWraperChan chan wraper) {
 		wrapper := <-callbackWraperChan
 		pool.Process(func() {
 			actor := wrapper.actor
-			actor.SetSender(wrapper.sender)
-			actor.OnReceive(wrapper.msg)
+
+			senderHandler, ok := actor.(ISenderHandler)
+			if ok {
+				senderHandler.SetSender(wrapper.sender)
+			}
+			receiveHandler, ok := actor.(IReceiveHandler)
+			if ok {
+				receiveHandler.OnReceive(wrapper.msg)
+			}
 		})
 	}
 }

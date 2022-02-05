@@ -27,8 +27,7 @@ type Stu struct {
 }
 
 type MyActor struct {
-	sender actorsystem.ActorRef
-	self   actorsystem.ActorRef
+	actorsystem.UntypedActor
 }
 
 func (act *MyActor) OnReceive(input proto.Message) {
@@ -38,28 +37,18 @@ func (act *MyActor) OnReceive(input proto.Message) {
 	fmt.Println(stu.Name)
 	time.Sleep(3 * time.Second)
 }
-func (act *MyActor) SetSender(sender actorsystem.ActorRef) {
-	act.sender = sender
-}
-func (act *MyActor) GetSender() actorsystem.ActorRef {
-	return act.sender
-}
-func (act *MyActor) SetSelf(self actorsystem.ActorRef) {
-	act.self = self
-}
-func (act *MyActor) GetSelf() actorsystem.ActorRef {
-	return act.self
-}
-func (act *MyActor) OnTimeout() {
-
-}
 func (act *MyActor) CreateInputObj() proto.Message {
 	return &utils.Student{}
 }
+
 func main() {
+	main_a()
+}
+
+func main_a() {
 	actorSystem := actorsystem.NewActorSystemNoRpc("MyActorSystem")
 
-	actorSystem.RegisterActor("m1", func() actorsystem.UntypedActor { return &MyActor{} }, 3)
+	actorSystem.RegisterActor("m1", func() actorsystem.IUntypedActor { return &MyActor{} }, 3)
 
 	for i := 0; i < 10; i++ {
 		actor := actorSystem.LocalActorOf("m1")
@@ -70,7 +59,6 @@ func main() {
 	}
 
 	time.Sleep(500 * time.Second)
-
 }
 
 func TimewheelTest() {
