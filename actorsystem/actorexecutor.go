@@ -43,14 +43,13 @@ func actorExecute(executor *ActorExecutor) {
 		wraper := <-executor.wraperChan
 		go executor.executePool.Process(func() {
 			actorObj := executor.actorPool.Get()
-			actor := actorObj.(IUntypedActor)
 
-			senderHandler, ok := actor.(ISenderHandler)
+			senderHandler, ok := actorObj.(ISenderHandler)
 			if ok {
 				senderHandler.SetSender(wraper.sender)
 			}
 
-			receiveHandler, ok := actor.(IReceiveHandler)
+			receiveHandler, ok := actorObj.(IReceiveHandler)
 			if ok {
 				receiveHandler.OnReceive(wraper.msg)
 			}
