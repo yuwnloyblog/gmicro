@@ -32,7 +32,6 @@ func NewSingleCluster(clustername, nodename string) *Cluster {
 
 func NewCluster(clustername, nodename, host string, port int, zkAddress []string) *Cluster {
 	actorSystem := actorsystem.NewActorSystem(nodename, host, port)
-	//add self to server
 
 	//current Node
 	curNode := NewNode(nodename, host, port)

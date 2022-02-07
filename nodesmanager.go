@@ -10,6 +10,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 	//"github.com/yuwnloyblog/commonutils"
 	"github.com/yuwnloyblog/commonutils"
+	"github.com/yuwnloyblog/gmicro/logs"
 	"github.com/yuwnloyblog/gmicro/utils"
 )
 
@@ -59,8 +60,32 @@ func NewNodesManager(basePath string, zkAddress []string) (*NodesManager, error)
 		basePath: basePath,
 		zkConn:   conn,
 	}
+	createPathIfNotExist(conn, basePath+"/nodes")
 	go manager.WatchChildrensChange(basePath+"/nodes", NodesChangeListener)
 	return manager, nil
+}
+
+func createPathIfNotExist(conn *zk.Conn, path string) {
+	pathStr := strings.Split(path, "/")
+	fmt.Println(pathStr)
+	nodePath := strings.Builder{}
+	for _, node := range pathStr {
+		if node == "" {
+			continue
+		}
+		nodePath.WriteString("/")
+		nodePath.WriteString(node)
+		tmpPath := nodePath.String()
+		exist, _, _ := conn.Exists(tmpPath)
+		if !exist {
+			rst, err := conn.Create(tmpPath, []byte{}, 0, zk.WorldACL(zk.PermAll))
+			if err == nil {
+				logs.Error("Failed to create the path[", rst, "]", err)
+			} else {
+				break
+			}
+		}
+	}
 }
 
 func NodesChangeListener(children []string, manager *NodesManager) {
