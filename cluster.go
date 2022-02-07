@@ -13,6 +13,10 @@ type Cluster struct {
 	isSingle     bool
 }
 
+type IActorRegister interface {
+	RegisterActor(method string, actorCreateFun func() actorsystem.IUntypedActor, concurrentCount int)
+}
+
 func NewSingleCluster(clustername, nodename string) *Cluster {
 	actorSystem := actorsystem.NewActorSystemNoRpc(nodename)
 	//current Node
