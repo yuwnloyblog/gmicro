@@ -13,6 +13,10 @@ type Cluster struct {
 	isSingle     bool
 }
 
+type IActorRegister interface {
+	RegisterActor(method string, actorCreateFun func() actorsystem.IUntypedActor, concurrentCount int)
+}
+
 func NewSingleCluster(clustername, nodename string) *Cluster {
 	actorSystem := actorsystem.NewActorSystemNoRpc(nodename)
 	//current Node
@@ -73,24 +77,28 @@ func (cluster *Cluster) getNodeList(method string) []*Node {
 }
 
 func (cluster *Cluster) UnicastRouteWithNoSender(method, targetId string, obj proto.Message) {
+	cluster.UnicastRoute(method, targetId, obj, actorsystem.NoSender)
+}
+
+func (cluster *Cluster) UnicastRoute(method, targetId string, obj proto.Message, sender actorsystem.ActorRef) {
 	nod := cluster.getTargetNode(method, targetId)
 	if nod != nil {
-		cluster.baseRouteWithNoSender(method, nod.Ip, nod.Port, obj)
+		cluster.baseRoute(method, nod.Ip, nod.Port, obj, sender)
 	}
 }
 
-func (cluster *Cluster) baseRouteWithNoSender(method string, host string, port int, obj proto.Message) {
+func (cluster *Cluster) baseRoute(method string, host string, port int, obj proto.Message, sender actorsystem.ActorRef) {
 	actor := cluster.actorSystem.ActerOf(host, port, method)
-	actor.Tell(obj, actorsystem.NoSender)
-}
-
-func (cluster *Cluster) RouteOnlyMethod(method string, obj proto.Message) {
-
+	actor.Tell(obj, sender)
 }
 
 func (cluster *Cluster) BroadcastWithNoSender(method string, obj proto.Message) {
+	cluster.BroadcastRoute(method, obj, actorsystem.NoSender)
+}
+
+func (cluster *Cluster) BroadcastRoute(method string, obj proto.Message, sender actorsystem.ActorRef) {
 	nodes := cluster.getNodeList(method)
 	for _, node := range nodes {
-		cluster.baseRouteWithNoSender(method, node.Ip, node.Port, obj)
+		cluster.baseRoute(method, node.Ip, node.Port, obj, sender)
 	}
 }
