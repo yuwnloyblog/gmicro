@@ -5,10 +5,10 @@ import "github.com/sirupsen/logrus"
 var Logger *logrus.Logger
 
 func getLogger() *logrus.Logger {
-	if Logger != nil {
-		return Logger
+	if Logger == nil {
+		Logger = logrus.StandardLogger()
 	}
-	return logrus.StandardLogger()
+	return Logger
 }
 
 func Panic(f interface{}, v ...interface{}) {
