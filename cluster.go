@@ -57,6 +57,12 @@ func (cluster *Cluster) StartUp() {
 	}
 }
 
+func (cluster *Cluster) Shutdown() {
+	if !cluster.isSingle {
+		cluster.nodesManager.Destroy()
+	}
+}
+
 func (cluster *Cluster) getTargetNode(method, targetId string) *Node {
 	if cluster.isSingle {
 		return cluster.currentNode
