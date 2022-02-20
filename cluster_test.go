@@ -18,7 +18,7 @@ func TestNewCluster(t *testing.T) {
 	// 	return &utils.Student{}
 	// }, MyProcessor, 10)
 
-	cluster.StartUp()
+	cluster.Startup()
 
 	stu := &utils.Student{
 		Name: "name1",

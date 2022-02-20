@@ -51,7 +51,7 @@ func (cluster *Cluster) RegisterActor(method string, actorCreateFun func() actor
 	cluster.currentNode.AddMethod(method)
 }
 
-func (cluster *Cluster) StartUp() {
+func (cluster *Cluster) Startup() {
 	if !cluster.isSingle {
 		cluster.nodesManager.RegisterSelf2ZK(*cluster.currentNode)
 	}
