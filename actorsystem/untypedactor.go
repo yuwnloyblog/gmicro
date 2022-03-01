@@ -22,6 +22,18 @@ type ICreateInputHandler interface {
 	CreateInputObj() proto.Message
 }
 
+type IDefaultUntypedActor interface {
+	IReceiveHandler
+	ISenderHandler
+	ISelfHandler
+	ICreateInputHandler
+}
+
+type ICallbackUntypedActor interface {
+	IDefaultUntypedActor
+	ITimeoutHandler
+}
+
 type UntypedActor struct {
 	Sender ActorRef
 	Self   ActorRef

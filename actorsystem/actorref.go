@@ -1,6 +1,8 @@
 package actorsystem
 
 import (
+	"time"
+
 	"github.com/yuwnloyblog/gmicro/actorsystem/rpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -16,13 +18,15 @@ type ActorRef interface {
 }
 
 type DefaultActorRef struct {
-	Host        string
-	Port        int
-	Method      string
-	Session     []byte
-	Sender      *MsgSender
-	is_Callback bool
-	ttl         int64
+	Host          string
+	Port          int
+	Method        string
+	Session       []byte
+	Sender        *MsgSender
+	is_Callback   bool
+	callbackActor ICallbackUntypedActor
+	ttl           time.Duration
+	dispatcher    *ActorDispatcher
 }
 
 type DeadLetterActorRef struct {
@@ -79,14 +83,16 @@ func NewActorRef(host string, port int, method string, session []byte, sender *M
 	return ref
 }
 
-func NewCallbackActorRef(ttl int64, host string, port int, session []byte, sender *MsgSender) ActorRef {
+func NewCallbackActorRef(ttl time.Duration, host string, port int, session []byte, callbackActor ICallbackUntypedActor, sender *MsgSender, dispatcher *ActorDispatcher) ActorRef {
 	ref := &DefaultActorRef{
-		Host:        host,
-		Port:        port,
-		Session:     session,
-		Sender:      sender,
-		is_Callback: true,
-		ttl:         ttl,
+		Host:          host,
+		Port:          port,
+		Session:       session,
+		Sender:        sender,
+		is_Callback:   true,
+		callbackActor: callbackActor,
+		ttl:           ttl,
+		dispatcher:    dispatcher,
 	}
 	return ref
 }
@@ -122,7 +128,10 @@ func (ref *DefaultActorRef) Tell(message proto.Message, sender ActorRef) {
 }
 
 func (ref *DefaultActorRef) startCallbackActor(session []byte) {
-
+	if ref.callbackActor != nil && ref.dispatcher != nil {
+		//start callback actor
+		ref.dispatcher.AddCallbackActor(session, ref.callbackActor, ref.ttl)
+	}
 }
 func (ref *DefaultActorRef) GetMethod() string {
 	return ref.Method

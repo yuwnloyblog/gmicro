@@ -1,6 +1,8 @@
 package gmicro
 
 import (
+	"time"
+
 	"github.com/yuwnloyblog/gmicro/actorsystem"
 	"google.golang.org/protobuf/proto"
 )
@@ -79,6 +81,18 @@ func (cluster *Cluster) getNodeList(method string) []*Node {
 	} else {
 		return []*Node{}
 	}
+}
+
+func (cluster *Cluster) LocalActorOf(method string) actorsystem.ActorRef {
+	return cluster.actorSystem.LocalActorOf(method)
+}
+
+func (cluster *Cluster) ActorOf(host string, port int, method string) actorsystem.ActorRef {
+	return cluster.actorSystem.ActerOf(host, port, method)
+}
+
+func (cluster *Cluster) CallbackActorOf(ttl time.Duration, actor actorsystem.ICallbackUntypedActor) actorsystem.ActorRef {
+	return cluster.actorSystem.CallbackActerOf(ttl, actor)
 }
 
 func (cluster *Cluster) UnicastRouteWithNoSender(method, targetId string, obj proto.Message) {
