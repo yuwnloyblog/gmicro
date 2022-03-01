@@ -1,6 +1,8 @@
 package gmicro
 
 import (
+	"time"
+
 	"github.com/yuwnloyblog/gmicro/actorsystem"
 	"google.golang.org/protobuf/proto"
 )
@@ -32,7 +34,6 @@ func NewSingleCluster(clustername, nodename string) *Cluster {
 
 func NewCluster(clustername, nodename, host string, port int, zkAddress []string) *Cluster {
 	actorSystem := actorsystem.NewActorSystem(nodename, host, port)
-	//add self to server
 
 	//current Node
 	curNode := NewNode(nodename, host, port)
@@ -52,9 +53,15 @@ func (cluster *Cluster) RegisterActor(method string, actorCreateFun func() actor
 	cluster.currentNode.AddMethod(method)
 }
 
-func (cluster *Cluster) StartUp() {
+func (cluster *Cluster) Startup() {
 	if !cluster.isSingle {
 		cluster.nodesManager.RegisterSelf2ZK(*cluster.currentNode)
+	}
+}
+
+func (cluster *Cluster) Shutdown() {
+	if !cluster.isSingle {
+		cluster.nodesManager.Destroy()
 	}
 }
 
@@ -74,6 +81,18 @@ func (cluster *Cluster) getNodeList(method string) []*Node {
 	} else {
 		return []*Node{}
 	}
+}
+
+func (cluster *Cluster) LocalActorOf(method string) actorsystem.ActorRef {
+	return cluster.actorSystem.LocalActorOf(method)
+}
+
+func (cluster *Cluster) ActorOf(host string, port int, method string) actorsystem.ActorRef {
+	return cluster.actorSystem.ActerOf(host, port, method)
+}
+
+func (cluster *Cluster) CallbackActorOf(ttl time.Duration, actor actorsystem.ICallbackUntypedActor) actorsystem.ActorRef {
+	return cluster.actorSystem.CallbackActerOf(ttl, actor)
 }
 
 func (cluster *Cluster) UnicastRouteWithNoSender(method, targetId string, obj proto.Message) {

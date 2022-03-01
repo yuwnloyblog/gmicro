@@ -2,29 +2,38 @@ package logs
 
 import "github.com/sirupsen/logrus"
 
+var Logger *logrus.Logger
+
+func getLogger() *logrus.Logger {
+	if Logger == nil {
+		Logger = logrus.StandardLogger()
+	}
+	return Logger
+}
+
 func Panic(f interface{}, v ...interface{}) {
-	logrus.Panic(f, v)
+	getLogger().Panic(f, v)
 }
 
 func Fata(f interface{}, v ...interface{}) {
-	logrus.Fatal(f, v)
+	getLogger().Fatal(f, v)
 }
 
 func Error(f interface{}, v ...interface{}) {
-	logrus.Error(f, v)
+	getLogger().Error(f, v)
 }
 func Warn(f interface{}, v ...interface{}) {
-	logrus.Warn(f, v)
+	getLogger().Warn(f, v)
 }
 
 func Info(f interface{}, v ...interface{}) {
-	logrus.Info(f, v)
+	getLogger().Info(f, v)
 }
 
 func Debug(f interface{}, v ...interface{}) {
-	logrus.Debug(f, v)
+	getLogger().Debug(f, v)
 }
 
 func Trace(f interface{}, v ...interface{}) {
-	logrus.Trace(f, v)
+	getLogger().Trace(f, v)
 }

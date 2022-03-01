@@ -75,13 +75,11 @@ func (dispatcher *ActorDispatcher) RegisterActor(method string, actorCreateFun f
 	dispatcher.dispatchMap.Store(method, executor)
 }
 
-func (dispatcher *ActorDispatcher) AddCallbackActor(session [16]byte, actor IUntypedActor, ttl int) {
+func (dispatcher *ActorDispatcher) AddCallbackActor(session []byte, actor ICallbackUntypedActor, ttl time.Duration) {
 	executor := NewCallbackActorExecutor(dispatcher.callbackPool, dispatcher.callbackWraperChan, actor)
-	key := utils.UUIDBytes2ShortString(session)
-	//utils.UUIDStringByBytes(session)
-
+	key := utils.Bytes2ShortString(session)
 	dispatcher.callbackMap.Store(key, executor)
-	task := dispatcher.timer.Add(time.Duration(ttl)*time.Second, func() {
+	task := dispatcher.timer.Add(ttl, func() {
 		obj, ok := dispatcher.callbackMap.LoadAndDelete(key)
 		if ok {
 			executor := obj.(*CallbackActorExecutor)
@@ -89,7 +87,6 @@ func (dispatcher *ActorDispatcher) AddCallbackActor(session [16]byte, actor IUnt
 		}
 	})
 	executor.Task = task
-
 }
 
 func commonExecute(req *rpc.RpcMessageRequest, msgSender *MsgSender, actor IUntypedActor) wraper {

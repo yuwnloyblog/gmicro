@@ -1,6 +1,8 @@
 package actorsystem
 
 import (
+	"time"
+
 	"github.com/yuwnloyblog/gmicro/utils"
 )
 
@@ -50,9 +52,9 @@ func (system *ActorSystem) ActerOf(host string, port int, method string) ActorRe
 	return ref
 }
 
-func (system *ActorSystem) CallbackActerOf(ttl int64, newInput NewInput, processor Processor) ActorRef {
+func (system *ActorSystem) CallbackActerOf(ttl time.Duration, actor ICallbackUntypedActor) ActorRef {
 	uid := utils.GenerateUUIDBytes()
-	ref := NewActorRef(system.Host, system.Prot, "method", uid, system.sender)
+	ref := NewCallbackActorRef(ttl, system.Host, system.Prot, uid, actor, system.sender, system.dispatcher)
 	return ref
 }
 
