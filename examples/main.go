@@ -42,7 +42,18 @@ func (act *MyActor) CreateInputObj() proto.Message {
 }
 
 func main() {
-	main_a()
+	cluster := gmicro.NewCluster("clusterName", "node1", "127.0.0.1", 9999, []string{"127.0.0.1:2181"})
+
+	cluster.RegisterActor("method1", func() actorsystem.IUntypedActor {
+		return &MyActor{}
+	}, 64)
+
+	cluster.Startup()
+
+	cluster.UnicastRoute("m1", "target_id", &utils.Student{
+		Name: "name1",
+		Age:  12,
+	}, actorsystem.NoSender)
 }
 
 func main_a() {
